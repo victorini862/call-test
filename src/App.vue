@@ -10,6 +10,8 @@
         <button @click="acceptCall()">Aceptar</button>
         <button @click="rejectCall()">Rechazar</button>
       </div>
+      {{ getCalling }}
+      <div v-if="getCalling">aa{{ getCalling }}bb</div>
   </div>
 </template>
 
@@ -41,15 +43,28 @@ export default {
 
     registerer = new Registerer(userAgent, {})
 
+    const that = this
+    
     // Agregar un "listener" para las llamadas entrantes
     userAgent.delegate = {
       onInvite(invite) {
+        invite.stateChange.addListener((state) => {
+          if (state == "Established") {
+            console.log("entra?");
+            const remoteAudioStream = invite.sessionDescriptionHandler.peerConnection.getRemoteStreams()[0];
+            if (remoteAudioStream) {
+              console.log("entra if");
+              // Set the remote audio stream as the source for the <audio> element.
+              that.$refs.remoteAudio.srcObject = remoteAudioStream;
+            }
+          }
+        });
         console.log("RECIBIENDO...");
         this.incomingCall = invite;
         this.isCalling = true;
         if (this.incomingCall instanceof Invitation) {
-        this.incomingCall.accept();
-      }
+          this.incomingCall.accept();
+        }
 
       }
     };
