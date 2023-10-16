@@ -1,15 +1,13 @@
 <template>
     <div>
-        <h1>SIPjs</h1>
-        <br>
         User: <input type="text" v-model="userName">
         Password: <input type="text" v-model="userPassword">
-        <button @click="register()">REGISTER </button>
+        <button @click="register()">REGISTER</button>
         <br>
 
         User receptor: <input type="text" v-model="userReceptor">
         <div class="boton" @click="callTest()">
-            TEST SIPjs
+            TEST JSSIP
         </div>
         <audio ref="remoteAudio" autoplay></audio>
 
@@ -19,6 +17,7 @@
             <button @click="rejectCall()">Rechazar</button>
         </div>
         {{ getCalling }} -- {{ isCalling }}
+        <div v-if="getCalling">aa{{ getCalling }}bb</div>
     </div>
 </template>
 
@@ -33,8 +32,6 @@ export default {
     name: 'App',
     data() {
         return {
-            url: "test01.cam.zonaapp.es",
-            port: "5062",
             userName: "",
             userPassword: "",
             userReceptor: "",
@@ -49,24 +46,27 @@ export default {
     methods: {
         register() {
             const transportOptions = {
-                server: `ws://${this.url}:${this.port}`
+                server: 'ws://test01.cam.zonaapp.es:5062'
             };
             userAgent = new UserAgent({
                 transportOptions,
                 authorizationUsername: this.userName,
                 authorizationPassword: this.userPassword,
-                uri: UserAgent.makeURI(`sip:${this.userName}@${this.url}`)
+                uri: UserAgent.makeURI(`sip:${this.userName}@test01.cam.zonaapp.es`)
             })
 
             registerer = new Registerer(userAgent, {})
 
             const that = this
+
+            // Agregar un "listener" para las llamadas entrantes
             userAgent.delegate = {
                 onInvite(invite) {
                     invite.stateChange.addListener((state) => {
                         if (state == "Established") {
                             const remoteAudioStream = invite.sessionDescriptionHandler.peerConnection.getRemoteStreams()[0];
                             if (remoteAudioStream) {
+                                // Set the remote audio stream as the source for the <audio> element.
                                 that.$refs.remoteAudio.srcObject = remoteAudioStream;
                             }
                         }
@@ -74,6 +74,9 @@ export default {
                     console.log("RECIBIENDO...");
                     that.isCalling = true;
                     that.incomingCall = invite;
+                    // if (this.incomingCall instanceof Invitation) {
+                    //   this.incomingCall.accept();
+                    // }
 
                 },
                 onMessage(message) {
@@ -82,6 +85,7 @@ export default {
             };
 
             userAgent.delegate.onConnect = () => {
+                // On connecting, register the user agent
                 console.log("conectado OK")
                 registerer.register()
             };
@@ -90,17 +94,31 @@ export default {
         },
         async callTest() {
             userAgent.start().then(() => {
-                const target = UserAgent.makeURI(`sip:${this.userReceptor}@${this.url}`);
-                
+                const target = UserAgent.makeURI(`sip:${this.userReceptor}@test01.cam.zonaapp.es`);
+                const inviter = new Inviter(userAgent, target, {
+                    extraHeaders: [
+                        'X-App-Command: barge'
+                    ]
+                });
 
-                const inviter = new Inviter(userAgent, target);
-                console.log("inviter", inviter);
                 inviter.stateChange.addListener(async (state) => {
                     if (state === "Established") {
                         const remoteAudioStream = inviter.sessionDescriptionHandler.peerConnection.getRemoteStreams()[0];
                         if (remoteAudioStream) {
                             this.$refs.remoteAudio.srcObject = remoteAudioStream;
                         }
+
+                        // Enviar un mensaje SIP cuando la llamada se establece
+                        const message = "Hola, esta es una llamada establecida.";
+                        const customHeaders = {
+                            'X-Custom-Header': 'ValorPersonalizado'
+                        };
+
+                        inviter.message(message, { extraHeaders: customHeaders }).then((response) => {
+                            console.log("Mensaje enviado cuando la llamada se estableció", response);
+                        }).catch((error) => {
+                            console.error("Error al enviar el mensaje", error);
+                        });
                     } else if (state === "Terminated") {
                         console.log("Terminada la llamada");
                     }
@@ -123,7 +141,6 @@ export default {
         acceptCall() {
             if (this.incomingCall instanceof Invitation) {
                 console.log(this.incomingCall)
-                console.log(JSON.stringify(this.incomingCall));
                 this.incomingCall.accept();
             }
         },
@@ -132,9 +149,6 @@ export default {
             if (this.incomingCall instanceof Invitation) {
                 this.incomingCall.reject();
             }
-        },
-        goToJSSiP() {
-            this.$router.push({})
         }
     },
     computed: {
