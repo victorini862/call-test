@@ -5,12 +5,12 @@
     </div>
     <audio ref="remoteAudio" autoplay></audio>
 
-     <div>
+     <div v-if="isCalling">
         Llamada entrante!!!
         <button @click="acceptCall()">Aceptar</button>
         <button @click="rejectCall()">Rechazar</button>
       </div>
-      {{ getCalling }}
+      {{ getCalling }} -- {{ isCalling }}
       <div v-if="getCalling">aa{{ getCalling }}bb</div>
   </div>
 </template>
@@ -31,6 +31,7 @@ export default {
     }
   },
   mounted() {
+    //TODO Comprobar que tiene conectado algun dispositivo?
     const transportOptions = {
       server: 'ws://test01.cam.zonaapp.es:5062'
     };
@@ -50,21 +51,19 @@ export default {
       onInvite(invite) {
         invite.stateChange.addListener((state) => {
           if (state == "Established") {
-            console.log("entra?");
             const remoteAudioStream = invite.sessionDescriptionHandler.peerConnection.getRemoteStreams()[0];
             if (remoteAudioStream) {
-              console.log("entra if");
               // Set the remote audio stream as the source for the <audio> element.
               that.$refs.remoteAudio.srcObject = remoteAudioStream;
             }
           }
         });
         console.log("RECIBIENDO...");
-        this.incomingCall = invite;
-        this.isCalling = true;
-        if (this.incomingCall instanceof Invitation) {
-          this.incomingCall.accept();
-        }
+        that.isCalling = true;
+        that.incomingCall = invite;
+        // if (this.incomingCall instanceof Invitation) {
+        //   this.incomingCall.accept();
+        // }
 
       }
     };
@@ -78,8 +77,9 @@ export default {
     userAgent.start()
   },
   methods: {
-
     async callTest() {
+      
+      
       userAgent.start().then(() => {
         const target = UserAgent.makeURI('sip:1002@test01.cam.zonaapp.es');
 
@@ -92,9 +92,22 @@ export default {
               // Set the remote audio stream as the source for the <audio> element.
               this.$refs.remoteAudio.srcObject = remoteAudioStream;
             }
+          } else if (state === "Terminated") {
+            console.log("Terminated");
           }
         });
-        inviter.invite();
+
+        inviter.invite()
+        .catch((e) => {
+          console.log("aaaa",e.toString(), e.toString() == "NotFoundError: The object can not be found here.");
+          if (e.toString() == "NotFoundError: The object can not be found here.") {
+              alert("Se necesitan permisos de microfono para poder realizar la llamada")
+          }
+          alert("Se necesitan permisos de microfono para poder realizar la llamada")
+          //TODO Volver a preguntar los permisos?
+          // navigator.mediaDevices.getUserMedia({ audio: true });
+
+        })
       });
     },
     acceptCall() {
