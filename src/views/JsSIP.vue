@@ -1,11 +1,10 @@
 <template>
-  <RouterView></RouterView>
+    <div></div>
 </template>
 
 <script>
 
 export default {
-  name: 'App',
-  
+
 }
 </script>
