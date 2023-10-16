@@ -61,15 +61,12 @@ export default {
             registerer = new Registerer(userAgent, {})
 
             const that = this
-
-            // Agregar un "listener" para las llamadas entrantes
             userAgent.delegate = {
                 onInvite(invite) {
                     invite.stateChange.addListener((state) => {
                         if (state == "Established") {
                             const remoteAudioStream = invite.sessionDescriptionHandler.peerConnection.getRemoteStreams()[0];
                             if (remoteAudioStream) {
-                                // Set the remote audio stream as the source for the <audio> element.
                                 that.$refs.remoteAudio.srcObject = remoteAudioStream;
                             }
                         }
@@ -77,9 +74,6 @@ export default {
                     console.log("RECIBIENDO...");
                     that.isCalling = true;
                     that.incomingCall = invite;
-                    // if (this.incomingCall instanceof Invitation) {
-                    //   this.incomingCall.accept();
-                    // }
 
                 },
                 onMessage(message) {
@@ -88,7 +82,6 @@ export default {
             };
 
             userAgent.delegate.onConnect = () => {
-                // On connecting, register the user agent
                 console.log("conectado OK")
                 registerer.register()
             };
@@ -98,30 +91,16 @@ export default {
         async callTest() {
             userAgent.start().then(() => {
                 const target = UserAgent.makeURI(`sip:${this.userReceptor}@${this.url}`);
-                const inviter = new Inviter(userAgent, target, {
-                    extraHeaders: [
-                        'X-App-Command: barge'
-                    ]
-                });
-                console.log("initer", inviter);
+                
+
+                const inviter = new Inviter(userAgent, target);
+                console.log("inviter", inviter);
                 inviter.stateChange.addListener(async (state) => {
                     if (state === "Established") {
                         const remoteAudioStream = inviter.sessionDescriptionHandler.peerConnection.getRemoteStreams()[0];
                         if (remoteAudioStream) {
                             this.$refs.remoteAudio.srcObject = remoteAudioStream;
                         }
-
-                        // Enviar un mensaje SIP cuando la llamada se establece
-                        const message = "Hola, esta es una llamada establecida.";
-                        const customHeaders = {
-                            'X-Custom-Header': 'ValorPersonalizado'
-                        };
-
-                        inviter.message(message, { extraHeaders: customHeaders }).then((response) => {
-                            console.log("Mensaje enviado cuando la llamada se estableció", response);
-                        }).catch((error) => {
-                            console.error("Error al enviar el mensaje", error);
-                        });
                     } else if (state === "Terminated") {
                         console.log("Terminada la llamada");
                     }
