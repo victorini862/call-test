@@ -3,7 +3,7 @@
         <h1>JsSIP</h1>
         <br>
         User: <input type="text" v-model="userName">
-        Password: <input type="password" v-model="userPassword">
+        Password: <input type="text" v-model="userPassword">
         <button @click="register">REGISTER</button>
         <br>
 
@@ -30,6 +30,8 @@ export default {
     name: 'App',
     data() {
         return {
+            url: "test01.cam.zonaapp.es",
+            port: "5062",
             userName: '',
             userPassword: '',
             userReceptor: '',
@@ -38,10 +40,10 @@ export default {
     },
     methods: {
         register() {
-            const socket = new JsSIP.WebSocketInterface('ws://your-sip-server.com');
+            const socket = new JsSIP.WebSocketInterface(`ws://${this.url}:${this.port}`);
             const configuration = {
                 sockets: [socket],
-                uri: `sip:${this.userName}@your-sip-server.com`,
+                uri: `sip:${this.userName}@${this.url}`,
                 password: this.userPassword,
             };
 
@@ -62,7 +64,7 @@ export default {
             ua.start();
         },
         callTest() {
-            const dest = `sip:${this.userReceptor}@your-sip-server.com`;
+            const dest = `sip:${this.userReceptor}@${this.url}`;
             const options = {
                 mediaConstraints: { audio: true, video: false },
             };

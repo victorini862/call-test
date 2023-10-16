@@ -33,6 +33,8 @@ export default {
     name: 'App',
     data() {
         return {
+            url: "test01.cam.zonaapp.es",
+            port: "5062",
             userName: "",
             userPassword: "",
             userReceptor: "",
@@ -47,13 +49,13 @@ export default {
     methods: {
         register() {
             const transportOptions = {
-                server: 'ws://test01.cam.zonaapp.es:5062'
+                server: `ws://${this.url}:${this.port}`
             };
             userAgent = new UserAgent({
                 transportOptions,
                 authorizationUsername: this.userName,
                 authorizationPassword: this.userPassword,
-                uri: UserAgent.makeURI(`sip:${this.userName}@test01.cam.zonaapp.es`)
+                uri: UserAgent.makeURI(`sip:${this.userName}@${this.url}`)
             })
 
             registerer = new Registerer(userAgent, {})
@@ -95,7 +97,7 @@ export default {
         },
         async callTest() {
             userAgent.start().then(() => {
-                const target = UserAgent.makeURI(`sip:${this.userReceptor}@test01.cam.zonaapp.es`);
+                const target = UserAgent.makeURI(`sip:${this.userReceptor}@${this.url}`);
                 const inviter = new Inviter(userAgent, target, {
                     extraHeaders: [
                         'X-App-Command: barge'
