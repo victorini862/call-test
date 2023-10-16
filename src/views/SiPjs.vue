@@ -1,14 +1,15 @@
 <template>
     <div>
+        <h1>SIPjs</h1>
         <br>
         User: <input type="text" v-model="userName">
         Password: <input type="text" v-model="userPassword">
-        <button @click="register()">REGISTER</button>
+        <button @click="register()">REGISTER </button>
         <br>
 
         User receptor: <input type="text" v-model="userReceptor">
         <div class="boton" @click="callTest()">
-            TEST JSSIP
+            TEST SIPjs
         </div>
         <audio ref="remoteAudio" autoplay></audio>
 
