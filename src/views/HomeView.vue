@@ -5,7 +5,7 @@
         </button>
 
         <button @click="goToSIPjs()">
-            Go To SIPjs
+            Go To SIPjs - ESETE ES EL QUE SE USA EN SPECTRUM
         </button>
     </div>
 </template>

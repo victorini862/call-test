@@ -11,6 +11,8 @@
         </div>
         <audio ref="remoteAudio" autoplay></audio>
 
+        <button @click="hangupCall()">COLGAR</button>
+
         <div v-if="isCalling">
             Llamada entrante!!!
             <button @click="acceptCall()">Aceptar</button>
@@ -27,6 +29,8 @@ import { UserAgent, Inviter, Invitation, Registerer } from "sip.js";
 
 var userAgent = null
 var registerer = null
+// var session = null
+var incomingCall = null
 
 export default {
     name: 'App',
@@ -36,7 +40,14 @@ export default {
             userPassword: "",
             userReceptor: "",
             isCalling: false,
-            incomingCall: null
+            // incomingCall: null,
+            session: null,
+            // domain: "test01.cam.zonaapp.es",
+            domain: "spectrum01.imira.club",
+            
+            domain_receiver: "test01.cam.zonaapp.es",
+            // domain_receiver: "spectrum01.imira.club",
+
         }
     },
     mounted() {
@@ -46,13 +57,13 @@ export default {
     methods: {
         register() {
             const transportOptions = {
-                server: 'ws://test01.cam.zonaapp.es:5062'
+                server: `ws://${this.domain}:5062`
             };
             userAgent = new UserAgent({
                 transportOptions,
                 authorizationUsername: this.userName,
                 authorizationPassword: this.userPassword,
-                uri: UserAgent.makeURI(`sip:${this.userName}@test01.cam.zonaapp.es`)
+                uri: UserAgent.makeURI(`sip:${this.userName}@${this.domain}`)
             })
 
             registerer = new Registerer(userAgent, {})
@@ -73,10 +84,10 @@ export default {
                     });
                     console.log("RECIBIENDO...");
                     that.isCalling = true;
-                    that.incomingCall = invite;
-                    // if (this.incomingCall instanceof Invitation) {
-                    //   this.incomingCall.accept();
-                    // }
+                    incomingCall = invite;
+                    if (incomingCall instanceof Invitation) {
+                      incomingCall.accept();
+                    }
 
                 },
                 onMessage(message) {
@@ -94,31 +105,21 @@ export default {
         },
         async callTest() {
             userAgent.start().then(() => {
-                const target = UserAgent.makeURI(`sip:${this.userReceptor}@test01.cam.zonaapp.es`);
+                const target = UserAgent.makeURI(`sip:${this.userReceptor}@${this.domain_receiver}`);
                 const inviter = new Inviter(userAgent, target, {
                     extraHeaders: [
                         'X-App-Command: barge'
                     ]
                 });
 
+                this.session = inviter;
+                
                 inviter.stateChange.addListener(async (state) => {
                     if (state === "Established") {
                         const remoteAudioStream = inviter.sessionDescriptionHandler.peerConnection.getRemoteStreams()[0];
                         if (remoteAudioStream) {
                             this.$refs.remoteAudio.srcObject = remoteAudioStream;
                         }
-
-                        // Enviar un mensaje SIP cuando la llamada se establece
-                        const message = "Hola, esta es una llamada establecida.";
-                        const customHeaders = {
-                            'X-Custom-Header': 'ValorPersonalizado'
-                        };
-
-                        inviter.message(message, { extraHeaders: customHeaders }).then((response) => {
-                            console.log("Mensaje enviado cuando la llamada se estableció", response);
-                        }).catch((error) => {
-                            console.error("Error al enviar el mensaje", error);
-                        });
                     } else if (state === "Terminated") {
                         console.log("Terminada la llamada");
                     }
@@ -137,7 +138,12 @@ export default {
                     })
             });
         },
-
+        
+        hangupCall() {
+            // TODO if state == "Establishing"
+            console.log(this.session);
+            // this.session.bye(); 
+        },
         acceptCall() {
             if (this.incomingCall instanceof Invitation) {
                 console.log(this.incomingCall)
