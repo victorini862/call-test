@@ -43,8 +43,11 @@ export default {
             // incomingCall: null,
             session: null,
             // domain: "test01.cam.zonaapp.es",
-            domain: "spectrum01.imira.club",
-            
+            // domain: "spectrum01.imira.club",
+            domain: "routr.der.usal.es",
+            domain_port: "51908",
+
+
             domain_receiver: "test01.cam.zonaapp.es",
             // domain_receiver: "spectrum01.imira.club",
 
@@ -57,7 +60,7 @@ export default {
     methods: {
         register() {
             const transportOptions = {
-                server: `ws://${this.domain}:5062`
+                server: `ws://${this.domain}:${this.domain_port}`
             };
             userAgent = new UserAgent({
                 transportOptions,
