@@ -45,10 +45,10 @@ export default {
             // domain: "test01.cam.zonaapp.es",
             // domain: "spectrum01.imira.club",
             domain: "routr.der.usal.es",
-            domain_port: "51908",
+            domain_port: "5062",
 
 
-            domain_receiver: "test01.cam.zonaapp.es",
+            domain_receiver: "",
             // domain_receiver: "spectrum01.imira.club",
 
         }
@@ -60,17 +60,21 @@ export default {
     methods: {
         register() {
             const transportOptions = {
-                server: `ws://${this.domain}:${this.domain_port}`
+                // server: `ws://${this.domain}:${this.domain_port}`
+                server: `ws://routr.der.usal.es:5062`
+                // server: `wss://routr.der.usal.es:5063`
             };
+            
             userAgent = new UserAgent({
                 transportOptions,
                 authorizationUsername: this.userName,
                 authorizationPassword: this.userPassword,
-                uri: UserAgent.makeURI(`sip:${this.userName}@${this.domain}`)
+                // uri: UserAgent.makeURI(`sip:${this.userName}@${this.domain}`)
+                uri: UserAgent.makeURI(`sip:${this.userName}@sip.bisite`)
             })
-
+            
             registerer = new Registerer(userAgent, {})
-
+            
             const that = this
 
             // Agregar un "listener" para las llamadas entrantes
@@ -107,8 +111,9 @@ export default {
             userAgent.start()
         },
         async callTest() {
+        console.log("opppooooooooooooooooooooooooooooooooooooooooooo", userAgent._state)
             userAgent.start().then(() => {
-                const target = UserAgent.makeURI(`sip:${this.userReceptor}@${this.domain_receiver}`);
+                const target = UserAgent.makeURI(`sip:${this.userReceptor}@sip.bisite`);
                 const inviter = new Inviter(userAgent, target, {
                     extraHeaders: [
                         'X-App-Command: barge'
