@@ -26,6 +26,14 @@
 <script>
 import { UserAgent, Inviter, Invitation, Registerer } from "sip.js";
 
+// import WebSocket from 'ws';
+
+// Asignar el WebSocket de 'ws' a global
+// global.WebSocket = WebSocket;
+if (typeof window === 'undefined') {
+    // Node.js environment
+    global.WebSocket = require('ws');
+}
 
 var userAgent = null
 var registerer = null
@@ -61,10 +69,12 @@ export default {
         register() {
             const transportOptions = {
                 // server: `ws://${this.domain}:${this.domain_port}`
-                server: `ws://routr.der.usal.es:5062`
-                // server: `wss://routr.der.usal.es:5063`
+                // server: `ws://routr.der.usal.es:5062`,
+                server: `wss://routr.der.usal.es:5063`,
+                // Define explícitamente WebSocket para entornos Node.js
+                webSocket: WebSocket
             };
-            
+
             userAgent = new UserAgent({
                 transportOptions,
                 authorizationUsername: this.userName,
@@ -72,9 +82,9 @@ export default {
                 // uri: UserAgent.makeURI(`sip:${this.userName}@${this.domain}`)
                 uri: UserAgent.makeURI(`sip:${this.userName}@sip.bisite`)
             })
-            
+
             registerer = new Registerer(userAgent, {})
-            
+
             const that = this
 
             // Agregar un "listener" para las llamadas entrantes
@@ -93,7 +103,7 @@ export default {
                     that.isCalling = true;
                     incomingCall = invite;
                     if (incomingCall instanceof Invitation) {
-                      incomingCall.accept();
+                        incomingCall.accept();
                     }
 
                 },
@@ -111,7 +121,7 @@ export default {
             userAgent.start()
         },
         async callTest() {
-        console.log("opppooooooooooooooooooooooooooooooooooooooooooo", userAgent._state)
+            console.log("opppooooooooooooooooooooooooooooooooooooooooooo", userAgent._state)
             userAgent.start().then(() => {
                 const target = UserAgent.makeURI(`sip:${this.userReceptor}@sip.bisite`);
                 const inviter = new Inviter(userAgent, target, {
@@ -121,7 +131,7 @@ export default {
                 });
 
                 this.session = inviter;
-                
+
                 inviter.stateChange.addListener(async (state) => {
                     if (state === "Established") {
                         const remoteAudioStream = inviter.sessionDescriptionHandler.peerConnection.getRemoteStreams()[0];
@@ -146,7 +156,7 @@ export default {
                     })
             });
         },
-        
+
         hangupCall() {
             // TODO if state == "Establishing"
             console.log(this.session);
